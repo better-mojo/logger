@@ -1,0 +1,27 @@
+[workspace]
+authors = ["hhglory <hhglory@outlook.com>"]
+channels = [
+    "https://conda.modular.com/max-nightly",
+    "https://repo.prefix.dev/better-ffi",
+    "https://repo.prefix.dev/better-mojo",
+    "conda-forge",
+]
+name = "try-spdlog"
+platforms = ["osx-arm64"]
+version = "0.1.0"
+# preview = ["pixi-build"]
+
+
+[tasks]
+
+[dependencies]
+mojo = ">=1.0.0b2.dev2026052406,<2" # TODO X: fix 版本不一致问题！！！
+
+
+libspdlog_ffi = ">=0.1.0,<0.2"
+
+# spdlog = { git = "https://github.com/better-mojo/logger.git", branch = "main" }
+spdlog = ">=0.1.1,<0.2"
+
+# [package.build]
+# backend = { name = "pixi-build-rattler-build", version = "*" }

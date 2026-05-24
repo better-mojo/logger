@@ -1,0 +1,10 @@
+pub mod ffi;
+
+#[cfg(feature = "c-headers")]
+pub fn generate_headers() -> ::std::io::Result<()> {
+    ::safer_ffi::headers::builder()
+        .to_file("cffi.h")?
+        .generate()?;
+
+    Ok(())
+}

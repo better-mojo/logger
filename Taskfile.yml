@@ -1,0 +1,289 @@
+version: "3"
+
+includes:
+  spdlog-ffi:
+    aliases: ["ffi", "sf"]
+    taskfile: ./spdlog-ffi/
+    dir: ./spdlog-ffi/
+    optional: true
+
+vars:
+  VAR1: "some-var"
+
+# global env:
+env:
+  ENV1: testing
+  WORKSPACE: "packages/"
+
+# env file:
+dotenv:
+  - .env
+
+################################################################################################
+
+tasks:
+  doctor:
+    aliases: ["check"]
+    cmds:
+      - task --version
+      - cargo -V
+      - pixi -V
+      - rattler-build -V
+      - pixi run mojo --version
+
+  setup:
+    aliases: ["s"]
+    cmds:
+      - task: install:pixi
+      - task: install:rattler-build
+
+  # https://taskfile.dev/docs/installation
+  # 安装 ubuntu/debian 上的依赖包
+  install:ubuntu:
+    aliases: ["i:ubuntu"]
+    cmds:
+      - sudo apt-get update
+      - sudo apt-get install -y build-essential
+      - curl -1sLf 'https://dl.cloudsmith.io/public/task/task/setup.deb.sh' | sudo -E bash
+      - apt install -y task # ubuntu/debian
+
+  # 安装 macos 上的依赖包
+  install:macos:
+    aliases: ["i:macos"]
+    cmds:
+      - brew install go-task # macos
+
+  # https://rust-lang.org/tools/install/
+  install:rust:
+    aliases: ["i:rust", "i:rs"]
+    cmds:
+      - curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+      - cargo -V
+
+  install:pixi:
+    aliases: ["i:pixi"]
+    cmds:
+      - curl -fsSL https://pixi.sh/install.sh | sh
+      - pixi global install rattler-build
+
+  # https://rattler-build.prefix.dev/latest/#installation
+  install:rattler-build:
+    aliases: ["i:rb"]
+    cmds:
+      - pixi global install rattler-build
+
+  install:skills:
+    aliases: ["i:skills"]
+    cmds:
+      - npx skills add modular/skills
+
+  pixi:
+    cmds:
+      - pixi {{.CLI_ARGS}}
+
+  install:
+    aliases: ["i"]
+    cmds:
+      - pixi install # 安装 pixi 依赖包
+
+  run:mojo:
+    aliases: ["run", "r"]
+    cmds:
+      - pixi run mojo -I . examples/basic_logging.mojo
+
+  run:logger:
+    aliases: ["r:logger", "r2"]
+    cmds:
+      - mkdir -p ./tmp/
+      - pixi run mojo -I . examples/logger_basic.mojo
+      - pixi run mojo -I . examples/logger_file.mojo
+
+  run:levels_demo:
+    aliases: ["r3"]
+    cmds:
+      - pixi run mojo -I . examples/levels_demo.mojo
+
+  ##########################################################################
+
+  # 编译发布 Linux-64 版本， 基于 orbstack 虚拟机
+  shell:linux-64:
+    aliases: ["sh:linux-64", "sh:linux"]
+    cmds:
+      - orbctl run -m u22build
+
+  # 编译发布 Linux-aarch64 版本， 基于 orbstack 虚拟机
+  shell:linux-aarch64:
+    aliases: ["sh:linux-aarch64"]
+    cmds:
+      - orbctl run -m u22dev
+
+  release:
+    aliases: ["rel"]
+    cmds:
+      - task: release:rs
+      - task: release:mojo
+
+  # release + publish ffi package
+  release:rs:
+    aliases: ["rel:rs"]
+    cmds:
+      - rm -rf output/
+      # - pixi run build-rs
+      - |
+        pixi run -e=dev rattler-build build \
+          --recipe recipes/rs-recipe.yaml \
+          -c https://conda.modular.com/max \
+          -c conda-forge \
+          --skip-existing=all
+      - task: publish:ffi
+    ignore_error: true
+
+  # release + publish mojo package
+  release:mojo:
+    aliases: ["rel:mojo"]
+    cmds:
+      # - rm -rf .pixi/  # TODO X: linux 编译失败，需要删除 pixi 缓存目录(macos 混用， 部分情况会遇到编译失败问题)
+      - rm -rf output/
+      # - pixi run build-mojo # TODO X: linux 编译失败
+      - |
+        pixi run -e=dev rattler-build build \
+          --recipe recipes/mojo-recipe.yaml \
+          -c https://conda.modular.com/max \
+          -c conda-forge \
+          --skip-existing=all
+      - task: publish:mojo
+    # env:
+    #   PIXI_CACHE_DIR: /tmp/pixi-cache
+    #   RATTLER_CACHE_DIR: /tmp/rattler-cache
+
+  #
+  # ref: https://taskfile.dev/usage/#looping-over-variables
+  #
+  publish:ffi:
+    aliases: ["upf", "up:ffi", "pub", "pub:auto"]
+    vars:
+      UP_PKGS:
+        sh: find . -name "libspdlog_ffi-*.conda" -type f
+    cmds:
+      - echo $PREFIX_DEV_API_KEY
+      - echo {{ .UP_PKGS }}
+      - for: { var: UP_PKGS }
+        cmd: |
+          pixi run -e=dev rattler-build upload prefix -c "better-ffi" \
+            --api-key=$PREFIX_DEV_API_KEY \
+            {{.ITEM}}
+      - open https://prefix.dev/channels/better-ffi/packages/libspdlog_ffi
+    dir: output/
+
+  publish:mojo:
+    aliases: ["up", "up:mojo", "pub", "pub:auto"]
+    vars:
+      UP_PKGS:
+        sh: find . -name "spdlog-*.conda" -type f
+    cmds:
+      - echo {{ .UP_PKGS }}
+      - for: { var: UP_PKGS }
+        cmd: |
+          pixi run -e=dev rattler-build upload prefix -c "better-mojo" \
+            --api-key=$PREFIX_DEV_API_KEY \
+            {{.ITEM}}
+      - open https://prefix.dev/channels/better-mojo
+      - open https://prefix.dev/channels/better-mojo/packages/spdlog
+    dir: output/
+
+  clean:
+    aliases: ["del"]
+    cmds:
+      - rm -rf output/
+      - task: ffi:clean
+    ignore_error: true
+
+  docs:
+    cmds:
+      - pixi i -e=dev
+      - pixi run -e=dev mkdocs serve --open --watch=docs --watch=mkdocs.yml --dev-addr=localhost:5005
+
+  docs:deploy:
+    aliases: ["docs:d"]
+    cmds:
+      - pixi i -e=dev
+      - pixi run -e=dev mkdocs gh-deploy # build and create gh-pages branch
+      - git push origin gh-pages:gh-pages --force # push to public repo
+
+  dev:
+    cmds:
+      - rustup toolchain install nightly
+      - rustup toolchain list
+
+  rsync:
+    aliases: ["rs"]
+    cmds: # 忽略目录 = [.git/, .github/, ], 改写成 for 循环
+      - |
+        for repo in {{.REPOS}}; do
+          rsync -avzdelete-after --exclude=".git/" --exclude=".github/" ./tmp/$repo/ ./packages/$repo/
+        done
+    vars:
+      REPOS: "flare sqlite morph json envo mobin"
+
+  clone:
+    aliases: ["cl"]
+    cmds:
+      - git clone git@github.com:better-mojo/sqlite.git
+      - git clone git@github.com:better-mojo/morph.git
+      - git clone git@github.com:ehsanmok/json.git
+      - git clone git@github.com:ehsanmok/envo.git
+    dir: ./tmp/
+    ignore_error: true
+
+  ################################################################################
+
+  count:
+    cmds:
+      - tokei # 代码统计: https://github.com/XAMPPRocky/tokei
+
+  quick:
+    aliases: ["q"]
+    cmds:
+      - task: cc
+      - task: push
+
+  # usage: task rc -- 2
+  rc:
+    aliases: ["reset:commit"]
+    cmds:
+      - git reset --soft HEAD~{{.CLI_ARGS}}
+      - task: c
+
+  cc:
+    cmds:
+      - task: commit
+      - task: commit
+
+  commit:
+    aliases: ["c"]
+    cmds:
+      - git add .
+      - git status
+      - |
+        git commit -m 'chore: 💪 update' --no-verify
+    ignore_error: true
+
+  commit:ai:
+    aliases: ["c:ai"]
+    cmds:
+      - git add .
+      - git status
+      - |
+        git commit -m 'chore: 🤖 update' --no-verify
+    ignore_error: true
+
+  pull:
+    cmds:
+      - git config pull.rebase false
+      - git pull origin main
+
+  push:
+    cmds:
+      - git push origin main --tags
+      - repo_url=`git remote -v | grep push | awk -F ":" '{print $2}' | awk -F
+        ".git" '{print "https://github.com/"$1}'`; open $repo_url

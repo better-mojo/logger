@@ -1,0 +1,24 @@
+context:
+  version: "0.1.0" # package version
+  package_name: "spdlog" # package name
+  package_path: "." # package path, 相对于 recipes/rs-recipe.yaml 的路径
+
+package:
+  name: ${{ package_name }}
+  version: ${{ version }}
+
+source:
+  path: ${{ package_path }}
+
+build:
+  script:
+    - mkdir -p $PREFIX/lib/mojo
+    - cp -r spdlog $PREFIX/lib/mojo/
+
+requirements:
+  run:
+    - mojo >=1.0.0b2.dev2026052215,<2
+
+about:
+  summary: spdlog-rs bindings for Mojo
+  license: MIT

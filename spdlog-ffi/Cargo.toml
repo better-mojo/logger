@@ -1,0 +1,34 @@
+[package]
+name = "spdlog-ffi"
+version = "0.1.0"
+edition = "2021"
+
+# fix for pixi + rattler-build
+[workspace]
+
+[lib]
+crate-type = [
+    "staticlib", # Ensure it gets compiled as a (static) C library
+    "cdylib",    # If you want a shared/dynamic C library (advanced)
+    "lib",       # For `generate-headers` and other downstream rust dependents
+    #    "rlib",
+    # such as integration `tests/`, doctests, and `examples/`
+]
+
+
+[[bin]]
+name = "generate-headers"
+path = "gen/gen.rs"
+required-features = ["c-headers"] # Do not build unless generating headers.
+
+
+[dependencies]
+safer-ffi = { version = "0.1.*", features = ["python-headers"] }
+# safer-ffi = { git = "https://github.com/getditto/safer_ffi.git", features = [
+#     "python-headers",
+# ] }
+
+spdlog-rs = { version = "0.5", features = ["level-trace", "level-debug"] }
+
+[features]
+c-headers = ["safer-ffi/headers"]
