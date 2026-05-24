@@ -70,7 +70,7 @@ spdlog = ">=0.1.1,<0.2"
 - ✅ 简单示例:
 
 ```mojo
-from spdlog.logger import get_logger
+from spdlog import get_logger
 
 
 def main() raises -> None:
