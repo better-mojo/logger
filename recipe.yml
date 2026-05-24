@@ -17,7 +17,7 @@ build:
 
 requirements:
   run:
-    - mojo >=1.0.0b2.dev2026052215,<2
+    - mojo >=1.0.0b2.dev2026052406,<2
 
 about:
   summary: spdlog-rs bindings for Mojo
