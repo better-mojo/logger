@@ -30,8 +30,8 @@
 
 | 项目                             | 包地址                 | 包托管平台     | 等级   | 描述                              |
 |-------------------------------------|-------------------------|-----------| -------|------------------------------------------|
-| ✅ [spdlog-ffi](./spdlog-ffi)   | [libspdlog_ffi](https://prefix.dev/channels/better-ffi/packages/libspdlog_ffi) | [prefix.dev](https://prefix.dev/channels/better-ffi) | ⭐️⭐️⭐️ | spdlog-rs ffi 包                              |
-| ✅ [spdlog](./spdlog) | [spdlog](https://prefix.dev/channels/better-mojo/packages/spdlog)  | [prefix.dev](https://prefix.dev/channels/better-mojo) | ⭐️⭐️⭐️⭐️   | spdlog-mojo 包                        |
+| ✅ [spdlog-ffi](./packages/spdlog-ffi)   | [libspdlog_ffi](https://prefix.dev/channels/better-ffi/packages/libspdlog_ffi) | [prefix.dev](https://prefix.dev/channels/better-ffi) | ⭐️⭐️⭐️ | spdlog-rs ffi 包                              |
+| ✅ [spdlog](./packages/spdlog) | [spdlog](https://prefix.dev/channels/better-mojo/packages/spdlog)  | [prefix.dev](https://prefix.dev/channels/better-mojo) | ⭐️⭐️⭐️⭐️   | spdlog-mojo 包                        |
 
 ## 特性
 
@@ -56,14 +56,14 @@ channels = [
 
 # 添加 2 个依赖包，包含 uuid-ffi 包和 uuid 包
 [dependencies]
-mojo = ">=1.0.0b2.dev2026052406,<2" # TODO X: fix 版本不一致问题！！！
+mojo = ">=1.0.0b2.dev2026052706,<2" # TODO X: fix 版本不一致问题！！！
 
 # FFI 依赖
 libspdlog_ffi = ">=0.1.0,<0.2"
 
 # Mojo 包依赖
 # spdlog = { git = "https://github.com/better-mojo/logger.git", branch = "main" }
-spdlog = ">=0.1.1,<0.2"
+spdlog = ">=0.1.2,<0.2"
 
 ```
 
@@ -127,17 +127,17 @@ task setup
 
 ### 编译调试
 
-- ✅ 编译调试 uuid-ffi 包
+- ✅ 编译调试 spdlog-ffi 包
 
 ```ruby
 
 # 运行示例
 task ffi:r
 
-# 编译 uuid-ffi 包
+# 编译 spdlog-ffi 包
 task ffi:b
 
-# release uuid-ffi 包
+# release spdlog-ffi 包
 task ffi:rel
 
 ```
@@ -157,14 +157,11 @@ task run:logger
 - ✅ [Taskfile](./Taskfile.yml)
 
 ```bash
+# 发布 spdlog-ffi 包到 prefix.dev
+task m:q:rs
 
-# 发布
-task release:rs
-task release:mojo
-
-# 发布到 prefix.dev
-task publish:ffi
-task publish:mojo
+# 发布 spdlog 包到 prefix.dev
+task m:q:mojo
 
 ```
 

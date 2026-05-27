@@ -3,8 +3,14 @@ version: "3"
 includes:
   spdlog-ffi:
     aliases: ["ffi", "sf"]
-    taskfile: ./spdlog-ffi/
-    dir: ./spdlog-ffi/
+    taskfile: ./packages/spdlog-ffi/Taskfile.yml
+    dir: ./packages/spdlog-ffi/
+    optional: true
+
+  spdlog: # spdlog-mojo
+    aliases: ["m"]
+    taskfile: ./packages/spdlog/Taskfile.yml
+    dir: ./packages/spdlog/
     optional: true
 
 vars:
@@ -86,23 +92,6 @@ tasks:
     cmds:
       - pixi install # 安装 pixi 依赖包
 
-  run:mojo:
-    aliases: ["run", "r"]
-    cmds:
-      - pixi run mojo -I . examples/basic_logging.mojo
-
-  run:logger:
-    aliases: ["r:logger", "r2"]
-    cmds:
-      - mkdir -p ./tmp/
-      - pixi run mojo -I . examples/logger_basic.mojo
-      - pixi run mojo -I . examples/logger_file.mojo
-
-  run:levels_demo:
-    aliases: ["r3"]
-    cmds:
-      - pixi run mojo -I . examples/levels_demo.mojo
-
   ##########################################################################
 
   # 编译发布 Linux-64 版本， 基于 orbstack 虚拟机
@@ -116,87 +105,6 @@ tasks:
     aliases: ["sh:linux-aarch64"]
     cmds:
       - orbctl run -m u22dev
-
-  release:
-    aliases: ["rel"]
-    cmds:
-      - task: release:rs
-      - task: release:mojo
-
-  # release + publish ffi package
-  release:rs:
-    aliases: ["rel:rs"]
-    cmds:
-      - rm -rf output/
-      # - pixi run build-rs
-      - |
-        pixi run -e=dev rattler-build build \
-          --recipe recipes/rs-recipe.yaml \
-          -c https://conda.modular.com/max \
-          -c conda-forge \
-          --skip-existing=all
-      - task: publish:ffi
-    ignore_error: true
-
-  # release + publish mojo package
-  release:mojo:
-    aliases: ["rel:mojo"]
-    cmds:
-      # - rm -rf .pixi/  # TODO X: linux 编译失败，需要删除 pixi 缓存目录(macos 混用， 部分情况会遇到编译失败问题)
-      - rm -rf output/
-      # - pixi run build-mojo # TODO X: linux 编译失败
-      - |
-        pixi run -e=dev rattler-build build \
-          --recipe recipes/mojo-recipe.yaml \
-          -c https://conda.modular.com/max \
-          -c conda-forge \
-          --skip-existing=all
-      - task: publish:mojo
-    # env:
-    #   PIXI_CACHE_DIR: /tmp/pixi-cache
-    #   RATTLER_CACHE_DIR: /tmp/rattler-cache
-
-  #
-  # ref: https://taskfile.dev/usage/#looping-over-variables
-  #
-  publish:ffi:
-    aliases: ["upf", "up:ffi", "pub", "pub:auto"]
-    vars:
-      UP_PKGS:
-        sh: find . -name "libspdlog_ffi-*.conda" -type f
-    cmds:
-      - echo $PREFIX_DEV_API_KEY
-      - echo {{ .UP_PKGS }}
-      - for: { var: UP_PKGS }
-        cmd: |
-          pixi run -e=dev rattler-build upload prefix -c "better-ffi" \
-            --api-key=$PREFIX_DEV_API_KEY \
-            {{.ITEM}}
-      - open https://prefix.dev/channels/better-ffi/packages/libspdlog_ffi
-    dir: output/
-
-  publish:mojo:
-    aliases: ["up", "up:mojo", "pub", "pub:auto"]
-    vars:
-      UP_PKGS:
-        sh: find . -name "spdlog-*.conda" -type f
-    cmds:
-      - echo {{ .UP_PKGS }}
-      - for: { var: UP_PKGS }
-        cmd: |
-          pixi run -e=dev rattler-build upload prefix -c "better-mojo" \
-            --api-key=$PREFIX_DEV_API_KEY \
-            {{.ITEM}}
-      - open https://prefix.dev/channels/better-mojo
-      - open https://prefix.dev/channels/better-mojo/packages/spdlog
-    dir: output/
-
-  clean:
-    aliases: ["del"]
-    cmds:
-      - rm -rf output/
-      - task: ffi:clean
-    ignore_error: true
 
   docs:
     cmds:

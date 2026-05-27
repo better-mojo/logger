@@ -7,7 +7,7 @@
 context:
   version: "0.1.0" # package version
   package_name: "libspdlog_ffi" # package name
-  package_path: "../spdlog-ffi/" # package path, 相对于 recipes/rs-recipe.yaml 的路径
+  package_path: "../../spdlog-ffi/" # package path, 相对于 recipes/rs-recipe.yaml 的路径
 
 package:
   name: ${{ package_name }}

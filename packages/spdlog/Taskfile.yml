@@ -1,0 +1,100 @@
+version: "3"
+
+tasks:
+  run:test:
+    aliases: ["rt"]
+    cmds:
+      - pixi run mojo -I ./src/ tests/test_logger.mojo
+
+  run:example:
+    aliases: ["run", "r"]
+    cmds:
+      - pixi run mojo -I ./src/ examples/basic_logging.mojo
+
+  run:logger:
+    aliases: ["r:logger", "r2"]
+    cmds:
+      - mkdir -p ./tmp/
+      - pixi run mojo -I ./src/ examples/logger_basic.mojo
+      - pixi run mojo -I ./src/ examples/logger_file.mojo
+
+  run:levels_demo:
+    aliases: ["r3"]
+    cmds:
+      - pixi run mojo -I ./src/ examples/levels_demo.mojo
+
+  ##########################################################################
+
+  release:
+    aliases: ["rel"]
+    cmds:
+      - task: release:rs
+      - task: release:mojo
+
+  quick:mojo:
+    aliases: ["q:mojo"]
+    cmds:
+      - task: release:mojo
+      - task: publish:mojo
+    ignore_error: true
+
+  # release + publish ffi package
+  release:rs:
+    aliases: ["rel:rs"]
+    cmds:
+      - rm -rf output/
+      - pixi run build-rs
+    ignore_error: true
+
+  # release + publish mojo package
+  release:mojo:
+    aliases: ["rel:mojo"]
+    cmds:
+      # - rm -rf .pixi/  # TODO X: linux 编译失败，需要删除 pixi 缓存目录(macos 混用， 部分情况会遇到编译失败问题)
+      - rm -rf output/
+      - pixi run build-mojo # TODO X: linux 编译失败
+    # env:
+    #   PIXI_CACHE_DIR: /tmp/pixi-cache
+    #   RATTLER_CACHE_DIR: /tmp/rattler-cache
+
+  #
+  # ref: https://taskfile.dev/usage/#looping-over-variables
+  #
+  publish:ffi:
+    aliases: ["upf", "up:ffi", "pub", "pub:auto"]
+    vars:
+      UP_PKGS:
+        sh: find . -name "libspdlog_ffi-*.conda" -type f
+    cmds:
+      - echo $PREFIX_DEV_API_KEY
+      - echo {{ .UP_PKGS }}
+      - for: { var: UP_PKGS }
+        cmd: |
+          pixi run -e=dev rattler-build upload prefix -c "better-ffi" \
+            --api-key=$PREFIX_DEV_API_KEY \
+            {{.ITEM}}
+      - open https://prefix.dev/channels/better-ffi/packages/libspdlog_ffi
+    dir: output/
+
+  publish:mojo:
+    aliases: ["up", "up:mojo", "pub", "pub:auto"]
+    vars:
+      UP_PKGS:
+        sh: find . -name "spdlog-*.conda" -type f
+    cmds:
+      - echo {{ .UP_PKGS }}
+      - for: { var: UP_PKGS }
+        cmd: |
+          pixi run -e=dev rattler-build upload prefix -c "better-mojo" \
+            --api-key=$PREFIX_DEV_API_KEY \
+            {{.ITEM}}
+      - open https://prefix.dev/channels/better-mojo
+      - open https://prefix.dev/channels/better-mojo/packages/spdlog
+    dir: output/
+
+  clean:
+    aliases: ["del"]
+    cmds:
+      - rm -rf output/
+      - task: ffi:clean
+    ignore_error: true

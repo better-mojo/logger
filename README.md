@@ -30,8 +30,8 @@
 
 | Project                             | Package                 | Host | Rank   | Description                              |
 |-------------------------------------|-------------------------|------|--------|------------------------------------------|
-| ✅ [spdlog-ffi](./spdlog-ffi)   | [libspdlog_ffi](https://prefix.dev/channels/better-ffi/packages/libspdlog_ffi) | [prefix.dev](https://prefix.dev/channels/better-ffi) | ⭐️⭐️⭐️ | spdlog-rs ffi package                    |
-| ✅ [spdlog](./spdlog) | [spdlog](https://prefix.dev/channels/better-mojo/packages/spdlog)  | [prefix.dev](https://prefix.dev/channels/better-mojo) | ⭐️⭐️⭐️⭐️   | spdlog-mojo package                      |
+| ✅ [spdlog-ffi](./packages/spdlog-ffi)   | [libspdlog_ffi](https://prefix.dev/channels/better-ffi/packages/libspdlog_ffi) | [prefix.dev](https://prefix.dev/channels/better-ffi) | ⭐️⭐️⭐️ | spdlog-rs ffi package                    |
+| ✅ [spdlog](./packages/spdlog) | [spdlog](https://prefix.dev/channels/better-mojo/packages/spdlog)  | [prefix.dev](https://prefix.dev/channels/better-mojo) | ⭐️⭐️⭐️⭐️   | spdlog-mojo package                      |
 
 ## Features
 
@@ -56,14 +56,14 @@ channels = [
 
 # Add dependency packages
 [dependencies]
-mojo = ">=1.0.0b2.dev2026052406,<2" # TODO X: fix version inconsistency issue!!!
+mojo = ">=1.0.0b2.dev2026052706,<2" # TODO X: fix version inconsistency issue!!!
 
 # FFI dependency
 libspdlog_ffi = ">=0.1.0,<0.2"
 
 # Mojo package dependency
 # spdlog = { git = "https://github.com/better-mojo/logger.git", branch = "main" }
-spdlog = ">=0.1.1,<0.2"
+spdlog = ">=0.1.2,<0.2"
 
 ```
 
@@ -157,14 +157,11 @@ task run:logger
 - ✅ [Taskfile](./Taskfile.yml)
 
 ```bash
+# Publish spdlog-ffi package to prefix.dev
+task m:q:rs
 
-# Release
-task release:rs
-task release:mojo
-
-# Publish to prefix.dev
-task publish:ffi
-task publish:mojo
+# Publish spdlog package to prefix.dev
+task m:q:mojo
 
 ```
 
